@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Exam Monitoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        function confirmDelete(examId, examTitle) {
+            if (confirm(`Are you sure you want to delete the exam "${examTitle}"? This action cannot be undone.`)) {
+                window.location.href = `/admin/delete-exam/${examId}`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard">
+            <div class="dashboard-header">
+                <h2>Admin Dashboard</h2>
+                <div>
+                    <span>Welcome, {{ session.username }}</span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+                </div>
+            </div>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div style="margin-bottom: 20px;">
+                <a href="{{ url_for('admin.create_exam') }}" class="btn btn-primary">Create New Exam</a>
+            </div>
+            
+            <h3>All Exams</h3>
+            
+            {% if exams %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Duration</th>
+                        <th>Passing Score</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in exams %}
+                    <tr>
+                        <td>{{ exam['title'] }}</td>
+                        <td>{{ exam['duration_minutes'] }} mins</td>
+                        <td>{{ exam['passing_score'] }}%</td>
+                        <td>
+                            {% if exam['is_active'] %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-warning">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ exam['created_at'][:10] }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.upload_questions', exam_id=exam['id']) }}" class="btn btn-secondary">Add Questions</a>
+                            <a href="{{ url_for('admin.view_results', exam_id=exam['id']) }}" class="btn btn-primary">View Results</a>
+                            <button class="btn btn-danger" onclick="confirmDelete({{ exam['id'] }}, '{{ exam['title'] }}')">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No exams created yet. Create your first exam to get started!</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

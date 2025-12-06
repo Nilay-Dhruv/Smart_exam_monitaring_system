@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam - {{ exam['title'] }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="exam-interface">
+            <div class="question-panel">
+                <h2>{{ exam['title'] }}</h2>
+                <div class="timer" id="timer">Time Remaining: --:--</div>
+                
+                <div id="questions-container">
+                    {% for q in questions %}
+                    <div class="question-item" data-question-id="{{ q['id'] }}" {% if loop.index > 1 %}style="display:none"{% endif %}>
+                        <h3>Question {{ loop.index }} of {{ questions|length }}</h3>
+                        <p style="font-size: 1.2em; margin: 20px 0;">{{ q['question_text'] }}</p>
+                        
+                        <ul class="options-list">
+                            <li onclick="selectOption(this, '{{ q['id'] }}', 'A')">
+                                <strong>A)</strong> {{ q['option_a'] }}
+                            </li>
+                            <li onclick="selectOption(this, '{{ q['id'] }}', 'B')">
+                                <strong>B)</strong> {{ q['option_b'] }}
+                            </li>
+                            <li onclick="selectOption(this, '{{ q['id'] }}', 'C')">
+                                <strong>C)</strong> {{ q['option_c'] }}
+                            </li>
+                            <li onclick="selectOption(this, '{{ q['id'] }}', 'D')">
+                                <strong>D)</strong> {{ q['option_d'] }}
+                            </li>
+                        </ul>
+                        
+                        <div style="margin-top: 20px;">
+                            {% if loop.index > 1 %}
+                            <button class="btn btn-secondary" onclick="previousQuestion()">Previous</button>
+                            {% endif %}
+                            
+                            {% if loop.index < questions|length %}
+                            <button class="btn btn-primary" onclick="nextQuestion()">Next</button>
+                            {% else %}
+                            <button class="btn btn-success" onclick="submitExam()">Submit Exam</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="monitoring-panel">
+                <h3>Monitoring Status</h3>
+                <video id="video-feed" autoplay playsinline></video>
+                <canvas id="canvas" style="display:none;"></canvas>
+                
+                <div id="face-status" class="status-indicator status-ok" style="margin-top: 15px;">
+                    Face: Detected 
+                </div>
+                
+                <div id="gaze-status" class="status-indicator status-ok">
+                    Gaze: Centered 
+                </div>
+                
+                <div id="warnings-box" style="margin-top: 15px;">
+                    <strong>Warnings: <span id="warning-count">0</span> / 3</strong>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                        3 warnings will auto-submit your exam
+                    </p>
+                </div>
+                
+                <div id="violation-alert" class="warning-box" style="display: none;">
+                    <strong>WARNING</strong>
+                    <p id="violation-message"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js"></script>
+    <script src="{{ url_for('static', filename='js/exam_monitoring.js') }}"></script>
+    <script>
+        const examDuration = {{ exam['duration_minutes'] }};
+        const attemptId = {{ attempt_id }};
+        let currentQuestion = 0;
+        let answers = {};
+        let warningCount = 0;
+        
+        function selectOption(element, questionId, answer) {
+            const container = element.parentElement;
+            container.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+            element.classList.add('selected');
+            
+            answers[questionId] = answer;
+            
+            fetch('/student/submit-answer', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({question_id: questionId, answer: answer})
+            });
+        }
+        
+        function nextQuestion() {
+            const questions = document.querySelectorAll('.question-item');
+            if (currentQuestion < questions.length - 1) {
+                questions[currentQuestion].style.display = 'none';
+                currentQuestion++;
+                questions[currentQuestion].style.display = 'block';
+            }
+        }
+        
+        function previousQuestion() {
+            const questions = document.querySelectorAll('.question-item');
+            if (currentQuestion > 0) {
+                questions[currentQuestion].style.display = 'none';
+                currentQuestion--;
+                questions[currentQuestion].style.display = 'block';
+            }
+        }
+        
+        function submitExam(reason = 'manual_submit') {
+            if (reason === 'manual_submit') {
+                if (!confirm('Are you sure you want to submit the exam?')) {
+                    return;
+                }
+            }
+            
+            fetch('/student/submit-exam', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({reason: reason})
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(`Exam submitted! Your score: ${data.score}/${data.total}`);
+                window.location.href = '/student/dashboard';
+            });
+        }
+        
+        function startTimer() {
+            let timeLeft = examDuration * 60;
+            const timerElement = document.getElementById('timer');
+            
+            const interval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `Time Remaining: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    alert('Time is up! Submitting exam automatically.');
+                    submitExam('time_up');
+                }
+                
+                timeLeft--;
+            }, 1000);
+        }
+        
+        window.addEventListener('load', () => {
+            startTimer();
+            initMonitoring();
+        });
+        
+        window.addEventListener('beforeunload', (e) => {
+            e.preventDefault();
+            e.returnValue = '';
+        });
+    </script>
+</body>
+</html>

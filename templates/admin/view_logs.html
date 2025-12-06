@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Logs - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container {
+            width: 90%;
+            margin: 40px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+    
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Monitoring Logs</h2>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3>Exam Details</h3>
+            <p><strong>Exam:</strong> {{ attempt['title'] }}</p>
+            <p><strong>Student:</strong> {{ attempt['full_name'] }} ({{ attempt['username'] }})</p>
+            <p><strong>Score:</strong> {{ attempt['score'] }} / {{ attempt['total_marks'] }}</p>
+            <p><strong>Warnings:</strong> {{ attempt['warnings_count'] }}</p>
+            <p><strong>Status:</strong> {{ attempt['status'] }}</p>
+        </div>
+
+        <a href="{{ url_for('admin.view_results', exam_id=attempt['exam_id']) }}" class="btn btn-secondary" style="margin-bottom: 20px;">Back to Results</a>
+
+        {% if logs %}
+            <h3>Activity Timeline</h3>
+
+            {% if total_seconds > 0 %}
+                <p><strong>Total time taken:</strong> {{ total_seconds }} seconds ({{ total_minutes }} min)</p>
+            {% else %}
+                <p><strong>Total time taken:</strong> Not available</p>
+            {% endif %}
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Face Detected</th>
+                        <th>Gaze Direction</th>
+                        <th>Head Pose</th>
+                        <th>Warning</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- First Log: Exam Started -->
+                    <tr>
+                        <td><strong>{{ logs[0]['timestamp'] | datetimeformat('%H:%M:%S') }}</strong></td>
+                        <td>
+                            {% if logs[0]['face_detected'] == 1 %}
+                                <span class="badge bg-success">Yes</span>
+                            {% elif logs[0]['face_detected'] == 0 %}
+                                <span class="badge bg-danger">No</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ logs[0]['gaze_direction'] or '-' }}</td>
+                        <td>{{ logs[0]['head_pose'] or '-' }}</td>
+                        <td>-</td>
+                        <td><strong>Exam Started</strong></td>
+                    </tr>
+
+                    <!-- Warning Logs -->
+                    {% for log in logs if log['warning_issued'] == 1 %}
+                    <tr class="table-warning">
+                        <td><strong>{{ log['timestamp'] | datetimeformat('%H:%M:%S') }}</strong></td>
+                        <td>
+                            {% if log['face_detected'] == 1 %}
+                                <span class="badge bg-success">Yes</span>
+                            {% elif log['face_detected'] == 0 %}
+                                <span class="badge bg-danger">No</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ log['gaze_direction'] or '-' }}</td>
+                        <td>{{ log['head_pose'] or '-' }}</td>
+                        <td><span class="badge bg-danger">Warning</span></td>
+                        <td>{{ log['details'] or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+
+                    <!-- Last Log: Exam Ended -->
+                    <tr class="table-primary">
+                        <td><strong>{{ logs[-1]['timestamp'] | datetimeformat('%H:%M:%S') }}</strong></td>
+                        <td>
+                            {% if logs[-1]['face_detected'] == 1 %}
+                                <span class="badge bg-success">Yes</span>
+                            {% elif logs[-1]['face_detected'] == 0 %}
+                                <span class="badge bg-danger">No</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>{{ logs[-1]['gaze_direction'] or '-' }}</td>
+                        <td>{{ logs[-1]['head_pose'] or '-' }}</td>
+                        <td>-</td>
+                        <td><strong>Exam Ended</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        {% else %}
+            <p>No monitoring logs available.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

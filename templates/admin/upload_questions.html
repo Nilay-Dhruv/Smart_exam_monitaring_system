@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Questions - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="upload-form">
+            <h2>Upload Questions for: {{ exam['title'] }}</h2>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="alert alert-warning">
+                <h4>Excel File Format Instructions</h4>
+                <p>Your Excel file must have the following columns (starting from row 2):</p>
+                <pre><br>
+Question             | Option A | Option B | Option C | Option D | Answer
+---------------------------------------------------------------------------
+Capital of France?   |  London  |   Paris  |   Rome   |  Berlin  |  B
+                </pre>
+                <p><strong>Note:</strong> The "Answer" column must contain A, B, C, or D.</p>
+            </div>
+
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="file">Upload Excel File (.xlsx or .xls only):</label>
+                    <input type="file" id="file" name="file" accept=".xlsx,.xls" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Upload & Import Questions</button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

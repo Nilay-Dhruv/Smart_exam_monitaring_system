@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Results - Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard">
+            <h2>Results for: {{ exam['title'] }}</h2>
+            
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary" style="margin-bottom: 20px;">Back to Dashboard</a>
+            
+            {% if results %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Score</th>
+                        <th>Total Marks</th>
+                        <th>Percentage</th>
+                        <th>Warnings</th>
+                        <th>Status</th>
+                        <th>Submitted At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>{{ result['full_name'] }} ({{ result['username'] }})</td>
+                        <td>{{ result['score'] }}</td>
+                        <td>{{ result['total_marks'] }}</td>
+                        <td>{{ ((result['score'] / result['total_marks']) * 100)|round(2) }}%</td>
+                        <td>
+                            {% if result['warnings_count'] == 0 %}
+                                <span class="badge badge-success">{{ result['warnings_count'] }}</span>
+                            {% elif result['warnings_count'] < 3 %}
+                                <span class="badge badge-warning">{{ result['warnings_count'] }}</span>
+                            {% else %}
+                                <span class="badge badge-danger">{{ result['warnings_count'] }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if result['status'] == 'completed' %}
+                                <span class="badge badge-success">Completed</span>
+                            {% elif result['status'] == 'terminated' %}
+                                <span class="badge badge-danger">Terminated</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ result['submitted_at'][:16] }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.view_logs', attempt_id=result['id']) }}" class="btn btn-secondary">View Logs</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p>No student has completed this exam yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

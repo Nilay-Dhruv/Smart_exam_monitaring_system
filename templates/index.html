@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Based Online Exam Monitoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="hero">
+            <h1>Smart Online Exam Monitoring System</h1>
+        </header>
+        
+        <div class="login-options">
+            <div class="card">
+                <h2>Admin</h2>
+                <a href="{{ url_for('admin_login') }}" class="btn btn-primary">Admin Login</a>
+            </div>
+            
+            <div class="card">
+                <h2>Student</h2>
+                <a href="{{ url_for('student_login') }}" class="btn btn-success">Student Login</a>
+                <a href="{{ url_for('student_register') }}" class="btn btn-secondary">Register</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
